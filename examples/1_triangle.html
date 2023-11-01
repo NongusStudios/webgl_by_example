@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" class="page">
+
+<head>
+    <link rel="icon" href="../images/webgl_logo.png">
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="examples.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL by Example</title>
+</head>
+
+<body id="body">
+<header>
+    <div class="topnav">
+        <div class="topnav-container">
+            <div class="b1" role="button" id="home-button">Home</div>
+            <div class="b1" role="button" id="examples-button">Examples</div>
+            <div class="b1" role="button" id="about-button">About</div>
+        </div>
+        <div class="main-header-container">
+            <img src="../images/webgl_logo.png" alt="webgl-logo" class="logo">
+            <h1 class="main-header">by Example</h1>
+        </div>
+
+    </div>
+</header>
+
+<main>
+    <div class="mainnav">
+        <!-- Adds padding to the content in mainnav -->
+        <div class="mainnav-contents">
+            <h1 class="main-header">1 - Triangle</h1>
+            <p>
+                A triangle is the equivalent of a "Hello, World!" program in graphics programming but still
+                demonstrates all the steps required to draw more complex objects. Understanding how to draw a
+                triangle is the first step to being able to draw everything else.
+            </p>
+            <div class="vsplit">
+                <div class="editor">
+                    <div class="line-numbers" id="line-numbers">
+                        <span></span>
+                    </div>
+                    <textarea id="editor" rows="25" cols="80" wrap="soft"></textarea>
+                </div>
+            </div>
+
+            <div class="vsplit">
+                <canvas id="glcanvas" width="640" height="480"></canvas>
+                <div class="b2" onclick="rebuild();">Rebuild</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script id="src" type="text/javascript">const vs_src = `
+precision mediump float;
+
+attribute vec2 a_vertex_pos;
+attribute vec4 a_color;
+varying vec4 fcolor;
+
+void main() {
+  gl_Position = vec4(a_vertex_pos, 0.0, 1.0);
+  fcolor = a_color;
+}`;
+
+const fs_src = `
+precision mediump float;
+
+varying vec4 fcolor;
+void main(){
+    gl_FragColor = fcolor;
+}`;
+
+// Helper function to create a shader
+function make_shader(gl, type, src){
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert(
+            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`,
+        );
+        gl.deleteShader(shader);
+        return null;
+    }
+
+    return shader;
+}
+
+// Helper function to create a program
+function make_program(gl, vs, fs){
+    const vert = make_shader(gl, gl.VERTEX_SHADER, vs);
+    const frag = make_shader(gl, gl.FRAGMENT_SHADER, fs);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        alert(
+            `Unable to initialize the shader program: ${gl.getProgramInfoLog(
+                program,
+            )}`,
+        );
+        return null;
+    }
+
+    return program;
+}
+
+function main(){
+    // Fetchs the canvas to draw on
+    const canvas = document.querySelector("#glcanvas");
+
+    // Init WebGL
+    const gl = canvas.getContext("webgl");
+
+    // Check for error
+    if(gl === null){
+        alert("Failed to load WebGL. Browser or device does not support it.");
+        return;
+    }
+
+    // Create a shader using vs_src and fs_src
+    const program = make_program(gl, vs_src, fs_src);
+
+    // Get location data in the program
+    const program_info = {
+        attrib_locations: {
+            vertex_position: gl.getAttribLocation(program, "a_vertex_pos"),
+            color: gl.getAttribLocation(program, "a_color"),
+        },
+    };
+
+    // Create a buffer and upload vertex data to it.
+    const position_buffer = gl.createBuffer();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+
+    const triangle_vertices = [
+        /* pos */ 0.0,  0.5,  /* color */ 1.0, 0.0, 0.0, 1.0,
+                  0.5, -0.5,              0.0, 1.0, 0.0, 1.0,
+                 -0.5, -0.5,              0.0, 0.0, 1.0, 1.0,
+    ];
+
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangle_vertices), gl.STATIC_DRAW);
+
+    // Tell webgl how to pass attributes to the shader.
+    gl.enableVertexAttribArray(program_info.attrib_locations.vertex_position);
+    gl.enableVertexAttribArray(program_info.attrib_locations.color);
+
+    gl.vertexAttribPointer(program_info.attrib_locations.vertex_position, 2, gl.FLOAT, false, 4*6, 0);
+    gl.vertexAttribPointer(program_info.attrib_locations.color, 4, gl.FLOAT, false, 4*6, 2*4);
+
+    // Draw
+    function render(now) {
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.clearColor(0.2, 0.2, 0.2, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+}
+
+main();
+</script>
+<script src="examples.js"></script>
+
+<footer>
+    <div class="footernav">
+        <div class="footer-page-links vsplit3" style="width: 25%;">
+            <a class="footerlink" href="../index.html">Home</a>
+            <a class="footerlink" href="../about.html">About</a>
+            <a class="footerlink" href="../examples.html">Examples</a>
+        </div>
+
+        <p class="vsplit3" style="width: 50%; text-align: center;">Created by Joel</p>
+
+        <div class="footer-page-links vsplit3" style="text-align: right; width: 25%;">
+            <a class="footerlink" href="examples/1_triangle.html">1 - Triangle</a>
+            <a class="footerlink" href="examples/2_cube.html">2 - Cube</a>
+            <a class="footerlink" href="examples/3_textures.html">3 - Textures</a>
+            <a class="footerlink" href="examples/3_textures.html">4 - Model Loading</a>
+            <a class="footerlink" href="examples/3_textures.html">5 - Basic Lighting</a>
+        </div>
+
+    </div>
+</footer>
+
+</body>
+                                 `
+</html>

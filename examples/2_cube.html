@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" class="page">
+
+<head>
+    <link rel="icon" href="../images/webgl_logo.png">
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="examples.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL by Example</title>
+</head>
+
+<body id="body">
+<header>
+    <div class="topnav">
+        <div class="topnav-container">
+            <div class="b1" role="button" id="home-button">Home</div>
+            <div class="b1" role="button" id="examples-button">Examples</div>
+            <div class="b1" role="button" id="about-button">About</div>
+        </div>
+        <div class="main-header-container">
+            <img src="../images/webgl_logo.png" alt="webgl-logo" class="logo">
+            <h1 class="main-header">by Example</h1>
+        </div>
+
+    </div>
+</header>
+
+<main>
+    <div class="mainnav">
+        <!-- Adds padding to the content in mainnav -->
+        <div class="mainnav-contents">
+            <h1 class="main-header">2 - Cube</h1>
+            <p>
+                This example demonstrates how 3D is handled with webgl. Uniforms are used to
+                pass a model and projection matrix to the shader. Which are then used to calculate
+                the position of each vertex.
+            </p>
+            <div class="vsplit">
+                <div class="editor">
+                    <div class="line-numbers" id="line-numbers">
+                        <span></span>
+                    </div>
+                    <textarea id="editor" rows="25" cols="80" wrap="soft"></textarea>
+                </div>
+            </div>
+
+            <div class="vsplit">
+                <canvas id="glcanvas" width="640" height="480"></canvas>
+                <div class="b2" onclick="rebuild();">Rebuild</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script
+        src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+        integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+        crossorigin="anonymous"
+        defer
+></script>
+<script id="src" type="module">const vs_src = `
+precision mediump float;
+
+attribute vec3 a_vertex_pos;
+attribute vec4 a_color;
+varying vec4 fcolor;
+
+uniform mat4 u_projection;
+uniform mat4 u_model;
+
+void main() {
+  gl_Position = u_projection * u_model * vec4(a_vertex_pos, 1.0);
+  fcolor = a_color;
+}`;
+
+const fs_src = `
+precision mediump float;
+
+varying vec4 fcolor;
+void main(){
+    gl_FragColor = fcolor;
+}`;
+
+// Helper function to create a shader
+function make_shader(gl, type, src){
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert(
+            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`,
+        );
+        gl.deleteShader(shader);
+        return null;
+    }
+
+    return shader;
+}
+
+// Helper function to create a program
+function make_program(gl, vs, fs){
+    const vert = make_shader(gl, gl.VERTEX_SHADER, vs);
+    const frag = make_shader(gl, gl.FRAGMENT_SHADER, fs);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        alert(
+            `Unable to initialize the shader program: ${gl.getProgramInfoLog(
+                program,
+            )}`,
+        );
+        return null;
+    }
+
+    return program;
+}
+
+function main(){
+    // Fetchs the canvas to draw on
+    const canvas = document.querySelector("#glcanvas");
+
+    // Init WebGL
+    const gl = canvas.getContext("webgl");
+
+    // Check for error
+    if(gl === null){
+        alert("Failed to load WebGL. Browser or device does not support it.");
+        return;
+    }
+
+    const program = make_program(gl, vs_src, fs_src);
+
+    const program_info = {
+        attrib_locations: {
+            a_vertex_pos: gl.getAttribLocation(program, "a_vertex_pos"),
+            a_color: gl.getAttribLocation(program, "a_color"),
+        },
+        uniform_locations: {
+            u_projection: gl.getUniformLocation(program, "u_projection"),
+            u_model: gl.getUniformLocation(program, "u_model"),
+        }
+    }
+
+    const positions = [
+        // Front face
+        -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+
+        // Back face
+        -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
+
+        // Top face
+        -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
+
+        // Bottom face
+        -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+
+        // Right face
+        1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
+
+        // Left face
+        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+    ];
+
+    const position_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    gl.enableVertexAttribArray(program_info.attrib_locations.a_vertex_pos);
+    gl.vertexAttribPointer(program_info.attrib_locations.a_vertex_pos,
+        3, gl.FLOAT, false, 0, 0
+    );
+
+    const face_colors = [
+        [1.0, 1.0, 1.0, 1.0], // Front face: white
+        [1.0, 0.0, 0.0, 1.0], // Back face: red
+        [0.0, 1.0, 0.0, 1.0], // Top face: green
+        [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
+        [1.0, 1.0, 0.0, 1.0], // Right face: yellow
+        [1.0, 0.0, 1.0, 1.0], // Left face: purple
+    ];
+
+    let colors = [];
+
+    for (let j = 0; j < face_colors.length; ++j) {
+        const c = face_colors[j];
+        // Repeat each color four times for the four vertices of the face
+        colors = colors.concat(c, c, c, c);
+    }
+
+    const color_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+    gl.enableVertexAttribArray(program_info.attrib_locations.a_color);
+    gl.vertexAttribPointer(program_info.attrib_locations.a_color,
+        4, gl.FLOAT, false, 0, 0
+    );
+
+
+    const indices = [
+        0,
+        1,
+        2,
+        0,
+        2,
+        3, // front
+        4,
+        5,
+        6,
+        4,
+        6,
+        7, // back
+        8,
+        9,
+        10,
+        8,
+        10,
+        11, // top
+        12,
+        13,
+        14,
+        12,
+        14,
+        15, // bottom
+        16,
+        17,
+        18,
+        16,
+        18,
+        19, // right
+        20,
+        21,
+        22,
+        20,
+        22,
+        23, // left
+    ];
+
+    const index_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+    // Draw
+    let last = 0.0;
+    let cube_rotation = 0.0;
+    function render(now) {
+        now *= 0.001;
+        const delta = now - last;
+        last = now;
+
+        cube_rotation += delta;
+
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.clearColor(0.2, 0.2, 0.2, 1.0);
+        gl.clearDepth(1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+
+        gl.useProgram(program);
+
+        const fov = (45 * Math.PI) / 180; // in radians
+        const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        const znear = 0.1;
+        const zfar = 100.0;
+        const projection_matrix = mat4.create();
+
+        mat4.perspective(projection_matrix, fov, aspect, znear, zfar);
+
+        const model = mat4.create();
+        mat4.translate(
+            model, // destination matrix
+            model, // matrix to translate
+            [-0.0, 0.0, -6.0]
+        ); // amount to translate
+
+        mat4.rotate(
+            model, // destination matrix
+            model, // matrix to rotate
+            cube_rotation, // amount to rotate in radians
+            [0, 0, 1]
+        ); // axis to rotate around (Z)
+        mat4.rotate(
+            model, // destination matrix
+            model, // matrix to rotate
+            cube_rotation * 0.7, // amount to rotate in radians
+            [0, 1, 0]
+        ); // axis to rotate around (Y)
+        mat4.rotate(
+            model, // destination matrix
+            model, // matrix to rotate
+            cube_rotation * 0.3, // amount to rotate in radians
+            [1, 0, 0]
+        ); // axis to rotate around (X)
+
+        gl.uniformMatrix4fv(program_info.uniform_locations.u_projection, false, projection_matrix);
+        gl.uniformMatrix4fv(program_info.uniform_locations.u_model, false, model);
+
+        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+}
+
+main();
+</script>
+<script src="examples.js"></script>
+
+<footer>
+    <div class="footernav">
+        <div class="footer-page-links vsplit3" style="width: 25%;">
+            <a class="footerlink" href="../index.html">Home</a>
+            <a class="footerlink" href="../about.html">About</a>
+            <a class="footerlink" href="../examples.html">Examples</a>
+        </div>
+
+        <p class="vsplit3" style="width: 50%; text-align: center;">Created by Joel</p>
+
+        <div class="footer-page-links vsplit3" style="text-align: right; width: 25%;">
+            <a class="footerlink" href="examples/1_triangle.html">1 - Triangle</a>
+            <a class="footerlink" href="examples/2_cube.html">2 - Cube</a>
+            <a class="footerlink" href="examples/3_textures.html">3 - Textures</a>
+            <a class="footerlink" href="examples/3_textures.html">4 - Model Loading</a>
+            <a class="footerlink" href="examples/3_textures.html">5 - Basic Lighting</a>
+        </div>
+
+    </div>
+</footer>
+</body>
+                                 `
+</html>
