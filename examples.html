@@ -15,44 +15,41 @@
     <header>
         <div class="topnav">
             <div class="topnav-container">
-                <div class="b1" role="button" id="home-button">Home</div>
-                <div class="b1" role="button" id="examples-button">Examples</div>
-                <div class="b1" role="button" id="about-button">About</div>
+                <a class="b1 footerlink" role="button" id="home-button" href="index.html">Home</a>
             </div>
             <div class="main-header-container">
                 <img src="images/webgl_logo.png" alt="webgl-logo" class="logo">
                 <h1 class="main-header">by Example</h1>
             </div>
-
+            <div class="topnav-container-right">
+                <a class="b1 footerlink" role="button" id="examples-button" href="examples.html">Examples</a>
+                <a class="b1 footerlink" role="button" id="about-button" href="about.html">About</a>
+            </div>
         </div>
     </header>
+
     <main>
         <div class="mainnav" style="align-content: center; flex-direction: row;">
-            <!-- Adds padding to the content in mainnav -->
-            <div class="mainnav-contents examples-grid">
-                <div>
-                    <img src="images/ex1_triangle.png" alt="ex1triangle" style="width: 70%; cursor: pointer;" id="1_triangle">
+            <div class="row">
+                <div class="column">
+                    <img src="images/ex1_triangle.png" alt="ex1triangle" style="width: 100%; cursor: pointer;" id="1_triangle">
                     <p>1 - Triangle</p>
-                </div>
 
-                <div>
-                    <img src="images/ex2_cube.png" alt="ex2cube" style="width: 70%; cursor: pointer;" id="2_cube">
-                    <p>2 - Cube</p>
-                </div>
-
-                <div>
-                    <img src="images/ex3_textures.png" alt="ex3textures" style="width: 70%; cursor: pointer;" id="3_textures">
-                    <p>3 - Textures</p>
-                </div>
-
-                <div>
-                    <img src="images/ex4_model.png" alt="ex4model" style="width: 70%; cursor: pointer;" id="4_model">
+                    <img src="images/ex4_model.png" alt="ex4model" style="width: 100%; cursor: pointer;" id="4_model">
                     <p>4 - OBJ Model Loading</p>
                 </div>
 
-                <div>
-                    <img src="images/ex5_basic_lighting.png" alt="ex5basiclighting" style="width: 70%; cursor: pointer;" id="5_basic_lighting">
+                <div class="column">
+                    <img src="images/ex2_cube.png" alt="ex2cube" style="width: 100%; cursor: pointer;" id="2_cube">
+                    <p>2 - Cube</p>
+
+                    <img src="images/ex5_basic_lighting.png" alt="ex5basiclighting" style="width: 100%; cursor: pointer;" id="5_basic_lighting">
                     <p>5 - Basic Lighting</p>
+                </div>
+
+                <div class="column">
+                    <img src="images/ex3_textures.png" alt="ex3textures" style="width: 100%; cursor: pointer;" id="3_textures">
+                    <p>3 - Textures</p>
                 </div>
             </div>
         </div>
