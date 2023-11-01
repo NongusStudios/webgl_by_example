@@ -17,7 +17,4 @@ window.onload = function() {
     document.getElementById("5_basic_lighting").onclick = function () {
         location.href = "examples/5_basic_lighting.html";
     }
-    document.getElementById("6_normal_mapping").onclick = function () {
-        location.href = "examples/6_normal_mapping.html";
-    }
 };
