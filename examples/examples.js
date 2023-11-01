@@ -1,19 +1,6 @@
 // Set buttons
 
 
-window.onload = function() {
-    document.getElementById("home-button").onclick = function () {
-        location.href = "../index.html";
-        console.log("Hello!");
-    };
-    document.getElementById("about-button").onclick = function () {
-        location.href = "../about.html";
-    };
-    document.getElementById("examples-button").onclick = function () {
-        location.href = "../examples.html";
-    };
-};
-
 document.getElementById("editor").addEventListener("keydown", function(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
